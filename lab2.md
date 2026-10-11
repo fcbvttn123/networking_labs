@@ -18,6 +18,9 @@
 - [Build the offline simulation (`playbooks/simulate_facts.yml`)](#build-the-offline-simulation-playbookssimulate_factsyml)
   - [Create mock device facts](#create-mock-device-facts)
   - [Create the first playbook](#create-the-first-playbook)
+- [Normalize facts from multiple vendors](#normalize-facts-from-multiple-vendors)
+  - [Define the report schema](#define-the-report-schema)
+  - [Write the normalization and report playbook (`playbooks/normalize_facts.yml`)](#write-the-normalization-and-report-playbook-playbooksnormalize_factsyml)
 
 
 # Lab Introduction
@@ -395,3 +398,90 @@ HQ-ACC01 | Aruba | 192.0.2.13 | JL679A       | 10.13.1000
 BR-RTR01 | Cisco | 192.0.2.14 | C8200L-1N-4T | 17.9.4
 BR-SW01  | Cisco | 192.0.2.15 | C9200L-24T   | 17.9.4
 ```
+
+
+# Normalize facts from multiple vendors
+
+## Define the report schema
+
+Every device (Cisco, Aruba) in the report will have this structure:
+
+```bash
+hostname: HQ-RTR01
+vendor: Cisco
+os_family: ios
+management_ip: 192.0.2.11
+model: C8200L-1N-4T
+serial_number: FTX00000001
+os_version: "17.9.4"
+uptime: "14 days"
+interface_count: 2
+interfaces_up: 1
+interfaces_down: 1
+```
+
+## Write the normalization and report playbook (`playbooks/normalize_facts.yml`)
+
+```yaml
+---
+- name: Normalize multi-vendor network facts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../data/mock_facts/devices.yml
+
+  tasks:
+    - name: Normalize every device
+      ansible.builtin.set_fact:
+        normalized_devices: >-
+          {{
+            normalized_devices | default([]) + [
+              {
+                'hostname': item.hostname | default('UNKNOWN'),
+                'vendor': item.vendor | default('UNKNOWN'),
+                'os_family': item.os_family | default('UNKNOWN'),
+                'management_ip': item.management_ip | default('UNKNOWN'),
+                'model': item.model | default('UNKNOWN'),
+                'serial_number': item.serial_number | default('UNKNOWN'),
+                'os_version': item.os_version | default('UNKNOWN'),
+                'uptime': item.uptime | default('UNKNOWN'),
+                'interface_count': item.interfaces | default([]) | length,
+                'interfaces_up': (
+                  item.interfaces | default([])
+                  | selectattr('oper_status', 'defined')
+                  | selectattr('oper_status', 'equalto', 'up')
+                  | list | length
+                ),
+                'interfaces_down': (
+                  item.interfaces | default([])
+                  | selectattr('oper_status', 'defined')
+                  | selectattr('oper_status', 'equalto', 'down')
+                  | list | length
+                )
+              }
+            ]
+          }}
+      loop: "{{ mock_devices }}"
+      loop_control:
+        label: "{{ item.hostname | default('UNKNOWN') }}"
+
+    - name: Create reports directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../reports"
+        state: directory
+        mode: "0750"
+
+    - name: Write normalized JSON report
+      ansible.builtin.copy:
+        content: "{{ normalized_devices | to_nice_json }}\n"
+        dest: "{{ playbook_dir }}/../reports/inventory.json"
+        mode: "0640"
+
+    - name: Display normalized results
+      ansible.builtin.debug:
+        var: normalized_devices
+```
+
+- Open `reports/inventory.json`. It will contain a JSON array of normalized device records
