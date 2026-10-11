@@ -21,6 +21,7 @@
 - [Normalize facts from multiple vendors](#normalize-facts-from-multiple-vendors)
   - [Define the report schema](#define-the-report-schema)
   - [Write the normalization and report playbook (`playbooks/normalize_facts.yml`)](#write-the-normalization-and-report-playbook-playbooksnormalize_factsyml)
+- [Add validation (`playbooks/validate_facts.yml`)](#add-validation-playbooksvalidate_factsyml)
 
 
 # Lab Introduction
@@ -485,3 +486,60 @@ interfaces_down: 1
 ```
 
 - Open `reports/inventory.json`. It will contain a JSON array of normalized device records
+
+
+# Add validation (`playbooks/validate_facts.yml`)
+
+```yaml
+---
+- name: Validate normalized network inventory
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../data/mock_facts/devices.yml
+
+  tasks:
+    - name: Check that all five devices are represented
+      ansible.builtin.assert:
+        that:
+          - mock_devices | length == 5
+        fail_msg: "Unexpected device count in the mock inventory."
+        success_msg: "Device count is correct."
+
+    - name: Check required identity fields
+      ansible.builtin.assert:
+        that:
+          - item.hostname is defined
+          - item.hostname | length > 0
+          - item.vendor in ['Cisco', 'Aruba']
+          - item.management_ip is defined
+          - item.model is defined
+          - item.serial_number is defined
+          - item.os_version is defined
+        fail_msg: "Required facts are missing for {{ item.hostname | default('UNKNOWN') }}"
+      loop: "{{ mock_devices }}"
+      loop_control:
+        label: "{{ item.hostname | default('UNKNOWN') }}"
+
+    - name: Report devices with operationally down interfaces
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.hostname }} has
+          {{
+            item.interfaces
+            | default([])
+            | selectattr('oper_status', 'defined')
+            | selectattr('oper_status', 'equalto', 'down')
+            | list | length
+          }}
+          operationally down interfaces.
+      loop: "{{ mock_devices }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+```
+
+- Collecting data isn't enough. The automation must also tell you whether the results are complete and trustworthy
+
+- Imagine your network manager receives a report with a missing serial number or a device that hasn't returned any facts
