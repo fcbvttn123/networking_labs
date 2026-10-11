@@ -15,6 +15,9 @@
   - [Create inventory/group\_vars/cisco\_ios.yml](#create-inventorygroup_varscisco_iosyml)
   - [Create inventory/group\_vars/aruba\_aoscx.yml](#create-inventorygroup_varsaruba_aoscxyml)
   - [Store credentials securely](#store-credentials-securely)
+- [Build the offline simulation (`playbooks/simulate_facts.yml`)](#build-the-offline-simulation-playbookssimulate_factsyml)
+  - [Create mock device facts](#create-mock-device-facts)
+  - [Create the first playbook](#create-the-first-playbook)
 
 
 # Lab Introduction
@@ -257,4 +260,138 @@ Inside the **editor**, add:
 ```bash
 vault_network_username: automation
 vault_network_password: "replace-with-the-lab-password"
+```
+
+
+# Build the offline simulation (`playbooks/simulate_facts.yml`)
+
+## Create mock device facts
+
+Create `data/mock_facts/devices.yml`
+
+```yaml
+---
+mock_devices:
+  - hostname: HQ-RTR01
+    vendor: Cisco
+    os_family: ios
+    management_ip: 192.0.2.11
+    model: C8200L-1N-4T
+    serial_number: FTX00000001
+    os_version: "17.9.4"
+    uptime: "14 days"
+    interfaces:
+      - name: GigabitEthernet0/0/0
+        admin_status: up
+        oper_status: up
+      - name: GigabitEthernet0/0/1
+        admin_status: up
+        oper_status: down
+
+  - hostname: HQ-SW01
+    vendor: Cisco
+    os_family: ios
+    management_ip: 192.0.2.12
+    model: C9300-24T
+    serial_number: FOC00000002
+    os_version: "17.9.4"
+    uptime: "42 days"
+    interfaces:
+      - name: GigabitEthernet1/0/1
+        admin_status: up
+        oper_status: up
+      - name: GigabitEthernet1/0/2
+        admin_status: up
+        oper_status: up
+
+  - hostname: HQ-ACC01
+    vendor: Aruba
+    os_family: aoscx
+    management_ip: 192.0.2.13
+    model: JL679A
+    serial_number: SG00000003
+    os_version: "10.13.1000"
+    uptime: "8 days"
+    interfaces:
+      - name: 1/1/1
+        admin_status: up
+        oper_status: up
+      - name: 1/1/2
+        admin_status: up
+        oper_status: down
+
+  - hostname: BR-RTR01
+    vendor: Cisco
+    os_family: ios
+    management_ip: 192.0.2.14
+    model: C8200L-1N-4T
+    serial_number: FTX00000004
+    os_version: "17.9.4"
+    uptime: "21 days"
+    interfaces:
+      - name: GigabitEthernet0/0/0
+        admin_status: up
+        oper_status: up
+
+  - hostname: BR-SW01
+    vendor: Cisco
+    os_family: ios
+    management_ip: 192.0.2.15
+    model: C9200L-24T
+    serial_number: FOC00000005
+    os_version: "17.9.4"
+    uptime: "35 days"
+    interfaces:
+      - name: GigabitEthernet1/0/1
+        admin_status: up
+        oper_status: up
+      - name: GigabitEthernet1/0/2
+        admin_status: down
+        oper_status: down
+```
+
+## Create the first playbook
+
+```yaml
+---
+- name: Simulate enterprise network fact gathering
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../data/mock_facts/devices.yml
+
+  tasks:
+    - name: Display the number of simulated devices
+      ansible.builtin.debug:
+        msg: "Found {{ mock_devices | length }} simulated devices"
+
+    - name: Display each device
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.hostname }} |
+          {{ item.vendor }} |
+          {{ item.management_ip }} |
+          {{ item.model }} |
+          {{ item.os_version }}
+      loop: "{{ mock_devices }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+```
+
+- `connection: local`: tasks run directly on the **control node**, instead of the managed remote hosts
+
+- `vars_files`: a directive used at the play level to load variables from external YAML or JSON files
+
+```bash
+$ ansible-playbook playbooks/simulate_facts.yml
+
+Found 5 simulated devices
+
+HQ-RTR01 | Cisco | 192.0.2.11 | C8200L-1N-4T | 17.9.4
+HQ-SW01  | Cisco | 192.0.2.12 | C9300-24T    | 17.9.4
+HQ-ACC01 | Aruba | 192.0.2.13 | JL679A       | 10.13.1000
+BR-RTR01 | Cisco | 192.0.2.14 | C8200L-1N-4T | 17.9.4
+BR-SW01  | Cisco | 192.0.2.15 | C9200L-24T   | 17.9.4
 ```
