@@ -1,273 +1,192 @@
-# Preparing Ubuntu boot disk template
+# Table of contents
 
-- Open Cloud Shell
+- [Table of contents](#table-of-contents)
+- [EVE-NG Network Emulation Lab on Google Cloud](#eve-ng-network-emulation-lab-on-google-cloud)
+  - [Project Overview](#project-overview)
+    - [Objectives](#objectives)
+  - [Architecture and Technology Stack](#architecture-and-technology-stack)
+  - [1. Prepare the Ubuntu Boot Image](#1-prepare-the-ubuntu-boot-image)
+    - [1.1 Enable the Compute Engine API](#11-enable-the-compute-engine-api)
+    - [1.2 Create a Custom Ubuntu Image](#12-create-a-custom-ubuntu-image)
+    - [1.3 Verify the Image](#13-verify-the-image)
+  - [2. Provision the EVE-NG Virtual Machine](#2-provision-the-eve-ng-virtual-machine)
+    - [2.1 Machine Configuration](#21-machine-configuration)
+    - [2.2 Operating System and Storage](#22-operating-system-and-storage)
+    - [2.3 Deployment Considerations](#23-deployment-considerations)
+  - [3. Install EVE-NG Professional](#3-install-eve-ng-professional)
+    - [3.1 Download and Run the Installer](#31-download-and-run-the-installer)
+    - [3.2 Reboot and Configure the IP Address](#32-reboot-and-configure-the-ip-address)
+  - [4. Install EVE-NG Docker Integration](#4-install-eve-ng-docker-integration)
 
-- Enable the **Compute Engine API**: `$ gcloud services enable compute.googleapis.com`
+# EVE-NG Network Emulation Lab on Google Cloud
 
-- Create a nested Ubuntu 24.04 image
+## Project Overview
 
-    ```bash
-    $ gcloud compute images create nested-ubuntu-noble 
-        --source-image-family=ubuntu-2404-lts-amd64 
-        --source-image-project=ubuntu-os-cloud 
-        --licenses https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx
-    ```
+This project documents the deployment of an EVE-NG Professional network emulation lab on Google Cloud Platform (GCP).
 
-- Verification: `$ gcloud compute images list --project=eve-ng-home-lab --no-standard-images`
+The lab runs on a custom Ubuntu 24.04 LTS image with nested virtualization enabled, providing an environment for building, configuring, and testing virtual network topologies.
 
+### Objectives
 
-# Creating the VM
+- Deploy EVE-NG Professional on Google Compute Engine.
+- Configure a custom Ubuntu image with nested virtualization support.
+- Provision cloud infrastructure for network emulation workloads.
+- Install EVE-NG and Docker integration.
+- Establish a foundation for hands-on networking and troubleshooting labs.
 
--  Machine Configuration
+## Architecture and Technology Stack
 
-    - General Purpose
+| Component | Configuration |
+|---|---|
+| Cloud Provider | Google Cloud Platform |
+| Compute Service | Google Compute Engine |
+| Operating System | Ubuntu 24.04 LTS |
+| Virtualization | Nested virtualization |
+| CPU Platform | AMD Milan |
+| Machine Type | `n2d-standard-8` |
+| vCPUs | 8 |
+| Memory | 32 GB |
+| Boot Disk | 100 GB balanced persistent disk |
+| Provisioning Model | Spot VM |
+| Network Emulation | EVE-NG Professional |
+| Container Integration | EVE-NG Docker package |
 
-    - N2D (CPU Platform AMD Milan)
+## 1. Prepare the Ubuntu Boot Image
 
-    - 8 vCPU, 4 core, 32 GB (`n2d-standard-8`)
+### 1.1 Enable the Compute Engine API
 
-    - Spot (VM Provisioning Model)
+Open Google Cloud Shell and select the Google Cloud project where the lab will be deployed.
 
-- OS and Storage
-
-    - Image: `nested-ubuntu-noble`
-
-    - Storage: 100 GB - new balanced persistent disk
-
-
-# EVE-NG Pro Installation
-
-```bash
-$ sudo -i
-$ wget https://www.eve-ng.net/noble/install-eve-pro.sh
-$ chmod +x install-eve-pro.sh
-$ ./install-eve-pro.sh
-$ apt update
-$ apt upgrade
-
-# Reboot EVE. Allow some time for reboot and then press "Reconnect"
-# Once the IP wizard screen appears, press ctrl +c and type the command "sudo -i" to become root
-# Now follow the IP setup wizard: set IP as DHCP
-# Reboot
-
-# After EVE is rebooted, reconnect the SSH session:
-$ sudo -i
-$ apt update
-$ apt install eve-ng-dockers
-```
-
-
-# Commands
-
-Access Switch
+Enable the Compute Engine API:
 
 ```bash
-inter ran g1/0 - 1
-description LACP Uplink to MLSA
-channel-group 2 mode active
-exit
-interface Port-channel 2
-description LACP Uplink to MLSA
-switchport trunk encapsulation dot1q
-switchport mode trunk
-switchport trunk allowed vlan 10,20,30,99
-exit
-
-
-inter ran g1/2 - 3
-description LACP Uplink to MLSB
-channel-group 3 mode active
-exit
-interface Port-channel 3
-description LACP Uplink to MLSB
-switchport trunk encapsulation dot1q
-switchport mode trunk
-switchport trunk allowed vlan 10,20,30,99
-exit
+gcloud services enable compute.googleapis.com
 ```
 
-Cisco MLS
+### 1.2 Create a Custom Ubuntu Image
+
+Create an Ubuntu 24.04 LTS image with the license required for nested virtualization:
 
 ```bash
-ip routing
-vlan 10
-name users
-vlan 20
-name servers
-vlan 30
-name voice
-vlan 99
-name management
-
-inter ran g0/0 - 1
-description LACP Downlink to SwitchA
-channel-group 1 mode active
-exit
-interface Port-channel 1
-description LACP Downlink to SwitchA
-switchport trunk encapsulation dot1q
-switchport mode trunk
-switchport trunk allowed vlan 10,20,30,99
-exit
-
-inter ran g0/2 - 3
-description LACP Downlink to SwitchB
-channel-group 2 mode active
-exit
-interface Port-channel 2
-description LACP Downlink to SwitchB
-switchport trunk encapsulation dot1q
-switchport mode trunk
-switchport trunk allowed vlan 10,20,30,99
-exit
-
-spanning-tree vlan 10 root primary
-spanning-tree vlan 20 root primary
-spanning-tree vlan 30 root secondary
-spanning-tree vlan 99 root secondary
-
-interface vlan 10
-ip address 192.168.10.2 255.255.255.0
-no shut
-vrrp 10 ip 192.168.10.1
-vrrp 10 priority 120
-vrrp 10 preempt
-
-interface vlan 20
-ip address 192.168.20.2 255.255.255.0
-no shut
-vrrp 20 ip 192.168.20.1
-vrrp 20 priority 120
-vrrp 20 preempt
-
-interface vlan 30
-ip address 192.168.30.2 255.255.255.0
-no shut
-vrrp 30 ip 192.168.30.1
-vrrp 30 priority 100
-
-interface vlan 99
-ip address 192.168.99.2 255.255.255.0
-no shut
-vrrp 99 ip 192.168.99.1
-vrrp 99 priority 100
+gcloud compute images create nested-ubuntu-noble \
+    --source-image-family=ubuntu-2404-lts-amd64 \
+    --source-image-project=ubuntu-os-cloud \
+    --licenses=https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx
 ```
 
-ArubaCX MLS
+This creates a custom image named `nested-ubuntu-noble`.
+
+### 1.3 Verify the Image
+
+List custom images in the Google Cloud project:
 
 ```bash
-hostname Aruba-MLS
-
-! Create VLANs
-vlan 10
-    name users
-    exit
-vlan 20
-    name servers
-    exit
-vlan 30
-    name voice
-    exit
-vlan 99
-    name management
-    exit
-
-! LAG 1 - Downlink to SwitchA
-interface lag 1
-    no shutdown
-    no routing
-    lacp mode active
-    vlan trunk allowed 10,20,30,99
-    exit
-
-! LAG 2 - Downlink to SwitchB
-interface lag 2
-    no shutdown
-    no routing
-    lacp mode active
-    vlan trunk allowed 10,20,30,99
-    exit
-
-! Physical members for SwitchA LAG
-interface 1/1/1
-    no shutdown
-    lag 1
-    exit
-interface 1/1/2
-    no shutdown
-    lag 1
-    exit
-
-! Physical members for SwitchB LAG
-interface 1/1/3
-    no shutdown
-    lag 2
-    exit
-interface 1/1/4
-    no shutdown
-    lag 2
-    exit
-
-! enable spanning tree
-conf t
-spanning-tree
-spanning-tree mstp
-
-! Aruba is secondary for VLANs 10 and 20
-spanning-tree vlan 10
-spanning-tree vlan 10 priority 7
-spanning-tree vlan 20
-spanning-tree vlan 20 priority 7
-
-! Aruba is primary for VLANs 30 and 99
-spanning-tree vlan 30
-spanning-tree vlan 30 priority 6
-spanning-tree vlan 99
-spanning-tree vlan 99 priority 6
-
-
-! enable VRRP
-router vrrp enable
-
-
-! SVI VLAN 10
-interface vlan 10
-    ip address 192.168.10.3/24
-    no shutdown
-    vrrp 10 address-family ipv4
-        address 192.168.10.1 secondary
-        priority 100
-        exit
-    exit
-
-! SVI VLAN 20
-interface vlan 20
-    ip address 192.168.20.3/24
-    no shutdown
-    vrrp 20 address-family ipv4
-        address 192.168.20.1 secondary
-        priority 100        
-    exit
-
-! SVI VLAN 30
-interface vlan 30
-    ip address 192.168.30.3/24
-    no shutdown
-    vrrp 30 address-family ipv4
-        address 192.168.30.1 primary
-        priority 120
-        preempt
-        exit
-    exit
-
-! SVI VLAN 99
-interface vlan 99
-    ip address 192.168.99.3/24
-    no shutdown
-    vrrp 99 address-family ipv4
-        address 192.168.99.1 primary
-        priority 120
-        preempt
-        exit
-    exit
+gcloud compute images list \
+    --project=eve-ng-home-lab \
+    --no-standard-images
 ```
+
+Verify that `nested-ubuntu-noble` appears in the output.
+
+> **Note:** Replace `eve-ng-home-lab` with your actual Google Cloud project ID if necessary.
+
+## 2. Provision the EVE-NG Virtual Machine
+
+Create a new virtual machine in Google Compute Engine using the custom Ubuntu image.
+
+### 2.1 Machine Configuration
+
+Configure the VM with the following specifications:
+
+- **Machine family:** General Purpose
+- **Machine series:** N2D
+- **CPU platform:** AMD Milan
+- **Machine type:** `n2d-standard-8`
+- **vCPUs:** 8
+- **Memory:** 32 GB
+- **Provisioning model:** Spot
+
+This configuration provides the compute resources needed to run network emulation workloads.
+
+### 2.2 Operating System and Storage
+
+Configure the boot disk:
+
+- **Operating system image:** `nested-ubuntu-noble`
+- **Disk capacity:** 100 GB
+- **Disk type:** Balanced persistent disk
+
+### 2.3 Deployment Considerations
+
+- Verify that the selected machine type and region support the required nested virtualization configuration.
+- Spot VMs can be preempted, so the lab should be treated as an interruptible environment.
+- Back up important lab configurations and virtual appliance files.
+- Restrict network access to trusted sources and expose only the management services required.
+
+## 3. Install EVE-NG Professional
+
+Connect to the VM using SSH after the instance has started.
+
+### 3.1 Download and Run the Installer
+
+Switch to the root account and download the official EVE-NG installation script:
+
+```bash
+sudo -i
+
+wget https://www.eve-ng.net/noble/install-eve-pro.sh
+
+chmod +x install-eve-pro.sh
+
+./install-eve-pro.sh
+```
+
+After the installer completes, update and upgrade the system packages:
+
+```bash
+apt update
+apt upgrade
+```
+
+### 3.2 Reboot and Configure the IP Address
+
+Reboot the VM when prompted by the installation process.
+
+Allow the VM to restart, then reconnect to the SSH session.
+
+When the EVE-NG IP configuration wizard appears:
+
+1. Press `Ctrl+C` to exit the current wizard screen, following the installation procedure.
+2. Switch to the root account:
+
+   ```bash
+   sudo -i
+   ```
+
+3. Follow the IP configuration wizard.
+4. Select DHCP for IP address assignment.
+5. Complete the configuration and reboot the VM.
+
+After the reboot, reconnect to the VM using SSH.
+
+Verify the VM's current IP address in Google Cloud Console.
+
+## 4. Install EVE-NG Docker Integration
+
+After reconnecting to the VM, switch to the root account and update the package lists:
+
+```bash
+sudo -i
+
+apt update
+```
+
+Install the EVE-NG Docker package:
+
+```bash
+apt install eve-ng-dockers
+```
+
+Allow the package installation to complete.
+
+Mark each item as complete only after verifying it in the deployed environment.
