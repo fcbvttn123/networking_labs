@@ -243,3 +243,20 @@ Aruba-MLS(config-vrrp)# preempt
 Aruba-MLS(config-vrrp)# exit
 Aruba-MLS(config-if)# exit
 ```
+
+
+# Todos
+
+- VLAN Creations ✅
+
+- Management IP Assignment for devices ✅
+
+- IP Assignment for Gateways on MLS ✅
+
+- LACP ✅
+
+- VRRP
+
+- OSPF
+
+- Documentation
