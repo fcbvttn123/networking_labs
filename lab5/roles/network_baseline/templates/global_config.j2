@@ -1,0 +1,7 @@
+! Global network baseline
+!
+! DNS configuration
+ip name-server {{ dns_servers | join(' ') }}
+!
+! NTP configuration
+ntp server {{ ntp_server }}

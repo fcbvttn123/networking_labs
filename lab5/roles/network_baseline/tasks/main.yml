@@ -1,0 +1,22 @@
+---
+- name: Ensure standard VLANs are present
+  cisco.ios.ios_vlans:
+    config:
+      - vlan_id: "{{ item.id }}"
+        name: "{{ item.name }}"
+        state: active
+    state: merged
+  loop: "{{ switch_vlans }}"
+# - name: Apply VLAN configuration from Jinja2
+#   cisco.ios.ios_config:
+#     src: vlans.j2
+#     save_when: modified
+
+- name: Apply Jinja2-generated global configuration
+  cisco.ios.ios_config:
+    content: "{{ lookup('ansible.builtin.template', 'global_config.j2') }}"
+    save_when: modified
+# - name: Apply global configuration from Jinja2
+#   cisco.ios.ios_config:
+#     src: global_config.j2
+#     save_when: modified

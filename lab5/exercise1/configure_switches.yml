@@ -27,3 +27,10 @@
     - name: Save running configuration to startup configuration
       cisco.ios.ios_config:
         save_when: modified
+# ---
+# - name: Apply Network Baseline and VLAN Standards
+#   hosts: datacenter_switches
+#   gather_facts: false
+
+#   roles:
+#     - network_baseline
