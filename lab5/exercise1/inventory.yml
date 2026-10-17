@@ -1,0 +1,16 @@
+---
+all:
+  children:
+    datacenter_switches:
+      hosts:
+        core-sw-01:
+          ansible_host: 192.168.10.10
+        access-sw-01:
+          ansible_host: 192.168.10.11
+      # vars:
+      #   ansible_connection: ansible.netcommon.network_cli
+      #   ansible_network_os: cisco.ios
+      #   ansible_user: admin
+      #   ansible_ssh_pass: "YourSecurePassword123"
+      #   ansible_become: yes
+      #   ansible_become_method: enable

@@ -1,0 +1,25 @@
+---
+# Connection
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios
+ansible_user: admin
+ansible_ssh_pass: "YourSecurePassword123"
+ansible_become: yes
+ansible_become_method: enable
+
+# Global Network Baseline Settings
+ntp_server: "10.0.0.100"
+dns_servers:
+  - "8.8.8.8"
+  - "1.1.1.1"
+
+# VLAN Dictionary to Provision
+switch_vlans:
+  - id: 10
+    name: "MANAGEMENT"
+  - id: 20
+    name: "USERS"
+  - id: 30
+    name: "VOICE"
+  - id: 40
+    name: "SERVERS"
