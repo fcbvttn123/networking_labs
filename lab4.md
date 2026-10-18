@@ -136,6 +136,9 @@ router(config-if)# no shutdown
 router(config-if)# vrrp 99 ip 192.168.99.1
 router(config-if)# vrrp 99 priority 100
 router(config-if)# exit
+
+# verification commands
+show vrrp
 ```
 
 ## ArubaCX MLS
@@ -242,6 +245,10 @@ Aruba-MLS(config-vrrp)# priority 120
 Aruba-MLS(config-vrrp)# preempt
 Aruba-MLS(config-vrrp)# exit
 Aruba-MLS(config-if)# exit
+
+# verification commands
+show running-config interface vlan10
+show vrrp detail 10
 ```
 
 
