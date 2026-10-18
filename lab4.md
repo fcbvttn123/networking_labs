@@ -191,9 +191,9 @@ Aruba-MLS(config-if)# exit
 Aruba-MLS(config)# do show lacp interfaces
 
 # stp
-Aruba-MLS(config)# spanning-tree
-Aruba-MLS(config)# spanning-tree mstp
-Aruba-MLS(config)# spanning-tree vlan 10
+Aruba-MLS(config)# spanning-tree # enable stp
+Aruba-MLS(config)# spanning-tree rpvst # set stp mode
+Aruba-MLS(config)# spanning-tree vlan 10 # create a stp instance
 Aruba-MLS(config)# spanning-tree vlan 10 priority 7
 Aruba-MLS(config)# spanning-tree vlan 20
 Aruba-MLS(config)# spanning-tree vlan 20 priority 7
@@ -254,6 +254,8 @@ Aruba-MLS(config-if)# exit
 - IP Assignment for Gateways on MLS ✅
 
 - LACP ✅
+
+- STP ✅
 
 - VRRP
 
