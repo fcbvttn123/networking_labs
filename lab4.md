@@ -252,6 +252,19 @@ show vrrp detail 10
 ```
 
 
+# VPC
+
+```bash
+ip 192.168.1.10/24 192.168.1.1
+ip dhcp
+ping 192.168.1.1
+trace 8.8.8.8
+show ip
+show arp
+save
+```
+
+
 # Todos
 
 - VLAN Creations ✅
