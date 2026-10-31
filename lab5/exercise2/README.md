@@ -1,6 +1,6 @@
 # Folder Structure
 
-- ansible.cfg
+- ansible.cfg `# must be the same name ansible.config`
 
 - inventory/
     - hosts.yml
