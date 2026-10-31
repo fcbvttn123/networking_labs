@@ -1,0 +1,14 @@
+---
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios.ios
+
+ansible_user: "{{ lookup('env', 'NETWORK_USERNAME') }}"
+ansible_password: "{{ lookup('env', 'NETWORK_PASSWORD') }}"
+
+# Enable this only if your devices require enable mode.
+ansible_become: true
+ansible_become_method: enable
+ansible_become_password: "{{ lookup('env', 'NETWORK_ENABLE_PASSWORD') }}"
+
+backup_directory: "{{ playbook_dir }}/output/backups"
+report_directory: "{{ playbook_dir }}/output"
