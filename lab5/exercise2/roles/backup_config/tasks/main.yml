@@ -1,0 +1,21 @@
+---
+- name: Create backup directory on control node
+  ansible.builtin.file:
+    path: "{{ backup_directory }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  run_once: true
+
+- name: Retrieve running configuration
+  cisco.ios.ios_command:
+    commands:
+      - show running-config
+  register: running_config
+
+- name: Save configuration backup on control node
+  ansible.builtin.copy:
+    content: "{{ running_config.stdout[0] }}\n"
+    dest: "{{ backup_directory }}/{{ inventory_hostname }}.cfg"
+    mode: "0600"
+  delegate_to: localhost

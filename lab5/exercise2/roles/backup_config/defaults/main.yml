@@ -1,0 +1,3 @@
+---
+backup_directory: "{{ playbook_dir }}/output/backups"
+report_directory: "{{ playbook_dir }}/output"
