@@ -1,0 +1,14 @@
+---
+- name: Gather Cisco IOS device facts
+  cisco.ios.ios_facts:
+    gather_subset:
+      - all
+
+- name: Display collected device facts
+  ansible.builtin.debug:
+    msg:
+      - "Inventory name: {{ inventory_hostname }}"
+      - "Device hostname: {{ ansible_net_hostname | default('Unknown') }}"
+      - "IOS version: {{ ansible_net_version | default('Unknown') }}"
+      - "Model: {{ ansible_net_model | default('Unknown') }}"
+      - "Serial number: {{ ansible_net_serialnum | default('Unknown') }}"
