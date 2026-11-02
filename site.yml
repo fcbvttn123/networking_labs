@@ -1,0 +1,9 @@
+---
+- name: Collect facts and back up network devices
+  hosts: ios
+  gather_facts: false
+  serial: 5
+
+  roles:
+    - gather_facts
+    - backup_config
