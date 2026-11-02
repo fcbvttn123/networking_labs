@@ -51,7 +51,7 @@ ansible --version
 ```
 
 
-# Set credentials for `invnetory/group_vars/ios.yml`
+# Set credentials for `inventory/group_vars/ios.yml`
 
 `yaml` file
 
@@ -80,3 +80,20 @@ read -s -p "SSH password: " NETWORK_PASSWORD
 export NETWORK_PASSWORD
 echo
 ```
+
+
+# Run the project
+
+```bash
+# verify inventory
+ansible-inventory --graph
+ansible-inventory --list
+
+# check ssh connectivity
+ssh your_lab_username@192.168.100.11
+
+# validate yaml and playbook
+ansible-playbook site.yml --syntax-check
+
+# run the complete automation
+ansible-playbook site.yml
