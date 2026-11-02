@@ -1,0 +1,12 @@
+---
+- name: Ensure report directory exists
+  ansible.builtin.file:
+    path: "{{ report_directory }}"
+    state: directory
+    mode: "0700"
+
+- name: Generate network inventory HTML report
+  ansible.builtin.template:
+    src: inventory.html.j2
+    dest: "{{ report_directory }}/inventory.html"
+    mode: "0600"

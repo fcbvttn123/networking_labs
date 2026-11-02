@@ -7,3 +7,14 @@
   roles:
     - gather_facts
     - backup_config
+
+- name: Generate consolidated network report
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    report_directory: "{{ playbook_dir }}/output"
+
+  roles:
+    - report
