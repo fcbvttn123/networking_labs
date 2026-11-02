@@ -18,6 +18,8 @@
     - backup_config/
         - tasks/
             - main.yml
+        - defaults/
+            - main.yml
     - report/
         - tasks/
             - main.yml
