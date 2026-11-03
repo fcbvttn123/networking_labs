@@ -1,7 +1,7 @@
 ---
 - name: Collect facts and back up network devices
   hosts: ios
-  gather_facts: false
+  gather_facts: false # disables the automatic gathering of system facts (such as OS version, network interfaces, and IP addresses) from the local machine
   serial: 5
 
   roles:
@@ -9,11 +9,11 @@
     - backup_config
 
 - name: Generate consolidated network report
-  hosts: localhost
-  connection: local
-  gather_facts: false
+  hosts: localhost # specifies that this play targets the local machine where Ansible is being executed, rather than remote network devices or servers
+  connection: local # tells ansible to execute tasks locally using the local connection plugin instead of attempting an SSH or WinRM connection
+  gather_facts: false # disables the automatic gathering of system facts (such as OS version, network interfaces, and IP addresses) from the local machine
 
-  vars:
+  vars: # define custom variables available to this play, cannot delete this because localhost doesn't have the variable "report_directory", only "ios group" has that variable
     report_directory: "{{ playbook_dir }}/output"
 
   roles:

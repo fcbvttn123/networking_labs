@@ -8,5 +8,5 @@
 - name: Generate network inventory HTML report
   ansible.builtin.template:
     src: inventory.html.j2
-    dest: "{{ report_directory }}/inventory.html"
+    dest: "{{ report_directory }}/inventory.html" # the "report_directory" variable comes directly from the "vars:" section defined in the playbook, NOT from "inventory/group_vars/ios.yml"
     mode: "0600"
